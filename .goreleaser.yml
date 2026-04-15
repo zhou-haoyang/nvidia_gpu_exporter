@@ -16,16 +16,13 @@ builds:
       - -X github.com/prometheus/common/version.BuildUser=goreleaser
       - -X github.com/prometheus/common/version.BuildDate={{.Date}}
     env:
-      - CGO_ENABLED=0
+      - CGO_ENABLED=1
     goos:
       - linux
       - darwin
       - windows
     goarch:
       - amd64
-      - arm
-      - arm64
-      - "386"
     goarm:
      - "7"
     ignore:
