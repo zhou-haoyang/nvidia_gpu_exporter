@@ -18,17 +18,18 @@ jobs:
         uses: actions/setup-go@v6.0.0
         with:
           go-version-file: go.mod
-      - name: Login to DockerHub
-        uses: docker/login-action@v4.0.0
-        with:
-          username: utkuozdemir
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Login to GHCR
-        uses: docker/login-action@v4.0.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+      # Docker publishing is disabled. Keep the steps below for future reuse.
+      # - name: Login to DockerHub
+      #   uses: docker/login-action@v4.0.0
+      #   with:
+      #     username: utkuozdemir
+      #     password: ${{ secrets.DOCKERHUB_TOKEN }}
+      # - name: Login to GHCR
+      #   uses: docker/login-action@v4.0.0
+      #   with:
+      #     registry: ghcr.io
+      #     username: ${{ github.repository_owner }}
+      #     password: ${{ secrets.GITHUB_TOKEN }}
       - name: GoReleaser
         uses: goreleaser/goreleaser-action@v7.0.0
         with:
@@ -37,4 +38,5 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PRIVATE_ACCESS_TOKEN: ${{ secrets.PRIVATE_ACCESS_TOKEN }}
+          # PRIVATE_ACCESS_TOKEN is only needed for Scoop publishing.
+          # PRIVATE_ACCESS_TOKEN: ${{ secrets.PRIVATE_ACCESS_TOKEN }}
