@@ -1,6 +1,7 @@
 package exporter
 
 import (
+	"encoding/csv"
 	"fmt"
 	"strings"
 )
@@ -23,10 +24,21 @@ type Cell struct {
 }
 
 func ParseCSVIntoTable(queryResult string, qFields []QField) (Table, error) {
-	lines := strings.Split(strings.TrimSpace(queryResult), "\n")
-	titlesLine := lines[0]
-	valuesLines := lines[1:]
-	rFields := toRFieldSlice(parseCSVLine(titlesLine))
+	reader := csv.NewReader(strings.NewReader(strings.TrimSpace(queryResult)))
+	reader.TrimLeadingSpace = true
+	reader.FieldsPerRecord = -1
+
+	records, err := reader.ReadAll()
+	if err != nil {
+		return Table{}, err
+	}
+	if len(records) == 0 {
+		return Table{}, fmt.Errorf("empty query result")
+	}
+
+	titlesLine := records[0]
+	valuesLines := records[1:]
+	rFields := toRFieldSlice(titlesLine)
 
 	numCols := len(qFields)
 	numRows := len(valuesLines)
@@ -41,7 +53,7 @@ func ParseCSVIntoTable(queryResult string, qFields []QField) (Table, error) {
 	for rowIndex, valuesLine := range valuesLines {
 		qFieldToCell := make(map[QField]Cell, numCols)
 		cells := make([]Cell, numCols)
-		rawValues := parseCSVLine(valuesLine)
+		rawValues := valuesLine
 
 		if len(qFields) != len(rFields) {
 			return Table{}, fmt.Errorf(
@@ -77,15 +89,4 @@ func ParseCSVIntoTable(queryResult string, qFields []QField) (Table, error) {
 		RFields:       rFields,
 		QFieldToCells: qFieldToCells,
 	}, nil
-}
-
-func parseCSVLine(line string) []string {
-	values := strings.Split(line, ",")
-	result := make([]string, len(values))
-
-	for i, field := range values {
-		result[i] = strings.TrimSpace(field)
-	}
-
-	return result
 }

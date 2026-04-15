@@ -5,6 +5,11 @@ This is an example output of the returned metrics.
 Note that when `AUTO` query fields mode is used (it is the default),
 the exporter will discover new fields and expose them on a best-effort basis.
 
+When `--process-config-file` is provided, the exporter also exposes process-level GPU metrics such as:
+
+- `nvidia_smi_process_info` with labels for GPU identity, pid, groupname, and resolved process metadata
+- `nvidia_smi_process_used_memory_bytes` with labels for GPU identity, pid, and groupname
+
 ```text
 # HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles.
 # TYPE go_gc_duration_seconds summary

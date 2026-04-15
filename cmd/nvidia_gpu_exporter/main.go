@@ -26,6 +26,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/utkuozdemir/nvidia_gpu_exporter/internal/exporter"
+	"github.com/utkuozdemir/nvidia_gpu_exporter/internal/process"
 )
 
 const redirectPageTemplate = `<html lang="en">
@@ -81,6 +82,14 @@ func run() error {
 				"You can find out possible fields by running `nvidia-smi --help-query-gpu`. "+
 				"The value `%s` will automatically detect the fields to query.", exporter.DefaultQField)).
 			Default(exporter.DefaultQField).String()
+		processConfigFile = kingpin.Flag("process-config-file",
+			"Path to a YAML config file that enables per-process GPU metrics and process-name matching.").
+			String()
+		processQFields = kingpin.Flag("query-compute-apps-field-names",
+			fmt.Sprintf("Comma-separated list of the query fields for `nvidia-smi --query-compute-apps`. "+
+				"You can find out possible fields by running `nvidia-smi --help-query-compute-apps`. "+
+				"The value `%s` will automatically detect the fields to query.", process.DefaultQField)).
+			Default(process.DefaultQField).String()
 		shutdownOnErr = kingpin.Flag("shutdown-on-error",
 			"Shut down the exporter if there is an error querying nvidia-smi. "+
 				"When false, exporter will simply log this error and export it as a metric, but will not crash.").
@@ -119,6 +128,30 @@ func run() error {
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create exporter: %w", err)
+	}
+
+	if *processConfigFile != "" {
+		processCfg, err := process.LoadConfig(*processConfigFile)
+		if err != nil {
+			return fmt.Errorf("failed to load process config: %w", err)
+		}
+
+		processCollector, err := process.NewCollector(
+			ctx,
+			process.DefaultPrefix,
+			*nvidiaSmiCommand,
+			*processQFields,
+			processCfg,
+			process.NewProcFSResolver("/proc"),
+			logger,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create process collector: %w", err)
+		}
+
+		if err = prometheus.Register(processCollector); err != nil {
+			return fmt.Errorf("failed to register process collector: %w", err)
+		}
 	}
 
 	if err = prometheus.Register(exp); err != nil {

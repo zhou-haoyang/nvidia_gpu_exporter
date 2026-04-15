@@ -15,6 +15,11 @@ NVIDIA GeForce RTX 2080 SUPER, 30.14 W
 Some Dummy GPU, 12.34 W
 `
 
+const quotedCsv = `
+name, used_memory [MiB]
+"python, worker", 12 MiB
+`
+
 func TestParseCsvIntoTable(t *testing.T) {
 	t.Parallel()
 
@@ -53,4 +58,15 @@ func TestParseCsvIntoTable(t *testing.T) {
 	}
 
 	assert.Equal(t, expected, parsed)
+}
+
+func TestParseCsvIntoTableWithQuotedCommas(t *testing.T) {
+	t.Parallel()
+
+	parsed, err := exporter.ParseCSVIntoTable(quotedCsv, []exporter.QField{"name", "used_memory"})
+
+	require.NoError(t, err)
+	require.Len(t, parsed.Rows, 1)
+	assert.Equal(t, "python, worker", parsed.Rows[0].QFieldToCells["name"].RawValue)
+	assert.Equal(t, "12 MiB", parsed.Rows[0].QFieldToCells["used_memory"].RawValue)
 }

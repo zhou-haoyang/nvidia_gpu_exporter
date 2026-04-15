@@ -21,6 +21,10 @@ Flags:
       --query-field-names="AUTO"
                             Comma-separated list of the query fields. You can find out possible fields by running `nvidia-smi --help-query-gpus`. The value `AUTO` will
                             automatically detect the fields to query.
+      --process-config-file=""
+                Path to a YAML file that enables per-process GPU metrics and process-name matchers.
+      --query-compute-apps-field-names="AUTO"
+                Comma-separated list of the query fields for `nvidia-smi --query-compute-apps`. You can find out possible fields by running `nvidia-smi --help-query-compute-apps`. The value `AUTO` will automatically detect the fields to query.
       --log.level=info      Only log messages with the given severity or above. One of: [debug, info, warn, error]
       --log.format=logfmt   Output format of log messages. One of: [logfmt, json]
       --version             Show application version.
@@ -41,3 +45,28 @@ Simply override the `--nvidia-smi-command` command-line argument (replace `SSH_U
 ```bash
 nvidia_gpu_exporter --nvidia-smi-command "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null SSH_USER@SSH_HOST nvidia-smi"
 ```
+
+## Per-process GPU metrics
+
+Per-process GPU metrics are enabled by providing `--process-config-file`. The feature is Linux-only in this release because it resolves process metadata from `/proc`.
+
+The config format follows the same matcher style as process-exporter:
+
+```yaml
+process_names:
+  - name: "{{.Comm}}:{{.ExeBase}}:{{.Username}}"
+    comm:
+      - python3
+    exe:
+      - /usr/bin/python3
+    cmdline:
+      - --app=(?P<App>[^\s]+)
+```
+
+Template variables available in `name`:
+
+- `{{.Comm}}`
+- `{{.ExeBase}}`
+- `{{.ExeFull}}`
+- `{{.Username}}`
+- `{{.Matches.<name>}}` for named capture groups in `cmdline` regexes
